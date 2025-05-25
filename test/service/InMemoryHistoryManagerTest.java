@@ -9,34 +9,62 @@ import java.util.List;
 
 public class InMemoryHistoryManagerTest {
     private HistoryManager historyManager;
+    private TaskManager taskManager;
 
     @BeforeEach
-    void initialization() {
+    void init() {
         historyManager = Managers.getDefaultHistory();
+        taskManager = Managers.getDefault();
     }
 
     @Test
     void shouldAddTasksAtHistoryList() {
-        Epic epic = new Epic("Очень важная задача", "Выполнить для эпика");
-        Task task = new Task("Задача №1", "Выполнить задачу №1");
-        Subtask subTask = new Subtask ("Подзадача №1", "Выполнить подзадачу №1", 1);
-        historyManager.add(epic);
+        Task task = new Task("Задача 1", "Делать", 1, Status.NEW);
+
         historyManager.add(task);
-        historyManager.add(subTask);
         final List<Task> history = historyManager.getHistory();
-        Assertions.assertNotNull(history, "Список просмотров пуст");
+
+        Assertions.assertNotNull(history, "История не пуста");
+        Assertions.assertEquals(1, history.size(), "История не пуста");
     }
 
     @Test
     void shouldAddNewTaskAtTheEndOfHistoryList() {
-        Task taskFirst = new Task("Задача №1", "Что то там");
-        Task taskSecond = new Task("Задача №2", "Еще что то");
 
-        historyManager.add(taskFirst);
-        historyManager.add(taskSecond);
+        Task taskOne = new Task("Задача 1", "Делать", 1, Status.NEW);
+        Task taskTwo = new Task("Задача 2", "Делать", 2, Status.NEW);
 
+        historyManager.add(taskOne);
+        historyManager.add(taskTwo);
         final List<Task> history = historyManager.getHistory();
-        Assertions.assertEquals(taskSecond, history.get(
-                history.size() - 1), "Задача не последнеея в списке ");
+
+        Assertions.assertEquals(taskTwo, history.get(history.size() - 1), "Задача является последней в истории");
+    }
+
+    @Test
+    void shouldAddTheSameTaskJustOneTimeAtHistoryList() {
+
+        Task taskOne = new Task("Задача", "Делать", 1, Status.NEW);
+
+        historyManager.add(taskOne);
+        historyManager.add(taskOne);
+        historyManager.add(taskOne);
+        final List<Task> history = historyManager.getHistory();
+
+        Assertions.assertEquals(1, history.size(), "Задача не была продублирована в истории");
+    }
+
+    @Test
+    void whenTaskHasDeletedShouldDeleteItFromHistoryList() {
+
+        Task taskOne = new Task("Задача", "Делать", 1, Status.NEW);
+        taskManager.addTask(taskOne);
+        taskManager.getTaskById(taskOne.getId());
+
+
+        taskManager.deleteTaskById(taskOne.getId());
+        final List<Task> history = historyManager.getHistory();
+
+        Assertions.assertEquals(0, history.size(), "Задача не удалена");
     }
 }

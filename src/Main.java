@@ -45,6 +45,7 @@ public class Main {
         System.out.println(manager.getEpicById(6));
 
         System.out.println("-".repeat(10));
-        System.out.println(manager.getHistory());
+        System.out.println(manager.getHistory().toString().replaceAll("[\\[\\]]", "")
+                .replace(',', '\n' ));
     }
 }
