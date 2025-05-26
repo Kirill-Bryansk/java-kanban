@@ -3,34 +3,90 @@ package service;
 import model.Task;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class InMemoryHistoryManager implements HistoryManager {
-
-    private final List<Task> historyList = new ArrayList<>();
-    private static final int NUMBER_OF_VIEWS = 10;
-
-    @Override
-    public List<Task> getHistory() {
-        if (!historyList.isEmpty()) {
-            return List.copyOf(historyList);
-        } else {
-            System.out.println("History is empty");
-            List<Task> emptyList = new ArrayList<>();
-            return emptyList;
-        }
-    }
+    private final Map<Integer, Node> historyMap = new HashMap<>();
+    private Node head;
+    private Node tail;
 
     @Override
     public void add(Task task) {
-        if (historyList.size() == NUMBER_OF_VIEWS) {
-            historyList.remove(0); // Я до ревью пробывал воспользоваться методом removeFirst()
-            // но тогда получается ошибка : cannot find symbol
-            //  symbol:   method removeFirst()
-            // хотя до запуска intelij не распознает эту ошибку
-            historyList.add(task);
+        removeNode(task.getId());
+        linkLast(task);
+        historyMap.put(task.getId(), tail);
+    }
+
+    @Override
+    public List<Task> getHistory() {
+        return getTasks();
+    }
+
+    @Override
+    public void remove(int id) {
+        removeNode(id);
+    }
+
+    private void linkLast(Task task) {
+        final Node oldTail = tail;
+        final Node newNode = new Node(oldTail, task, null);
+        tail = newNode;
+        if (oldTail == null) {
+            head = newNode;
         } else {
-            historyList.add(task);
+            oldTail.next = newNode;
+        }
+    }
+
+    private List<Task> getTasks() {
+        List<Task> historyList = new ArrayList<>();
+        Node saveNode = head;
+        while (saveNode != null) {
+            historyList.add(saveNode.task);
+            saveNode = saveNode.next;
+        }
+        return historyList;
+    }
+
+    private void removeNode(int id) {
+        Node node = historyMap.remove(id);
+        if (node == null) {
+            System.out.println("Node doesn't exist");
+            return;
+        }
+        if (node == head) {
+            head = node.next;
+            if (head != null) {
+                head.prev = null;
+            } else {
+                tail = null;
+            }
+        } else if (node == tail) {
+            tail = node.prev;
+            if (tail != null) {
+                tail.next = null;
+            } else {
+                head = null;
+            }
+        } else {
+            node.prev.next = node.next;
+            node.next.prev = node.prev;
+        }
+        historyMap.remove(node.task.getId());
+    }
+
+    private static class Node {
+
+        Node next;
+        Task task;
+        Node prev;
+
+        public Node(Node prev, Task task, Node next) {
+            this.next = next;
+            this.task = task;
+            this.prev = prev;
         }
     }
 }
