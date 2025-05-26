@@ -51,6 +51,5 @@ public class Main {
         manager.deleteTaskById(2);
         System.out.println("-".repeat(10));
         System.out.println(manager.getHistory().toString().replaceAll("[\\[\\]]", ""));
-
     }
 }
