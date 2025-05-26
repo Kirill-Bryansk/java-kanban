@@ -112,7 +112,7 @@ public class InMemoryTaskManager implements TaskManager {
                 return task;
             }
         }
-        System.out.println("This task not exist");
+        System.out.println("Task doesn't exist");
         return null;
     }
 
@@ -125,7 +125,7 @@ public class InMemoryTaskManager implements TaskManager {
                 return epic;
             }
         }
-        System.out.println("This epic not exist");
+        System.out.println("Epic doesn't exist");
         return null;
     }
 
@@ -138,7 +138,7 @@ public class InMemoryTaskManager implements TaskManager {
                 return subtask;
             }
         }
-        System.out.println("This subtask not exist");
+        System.out.println("Subtask doesn't exist");
         return null;
     }
 
@@ -152,7 +152,7 @@ public class InMemoryTaskManager implements TaskManager {
             taskMap.replace(taskID, task);
             return task;
         }
-        System.out.println("This task not exist");
+        System.out.println("Task doesn't exist");
         return null;
     }
 
@@ -180,7 +180,7 @@ public class InMemoryTaskManager implements TaskManager {
             updateEpicStatus(epic);
             return epic;
         }
-        System.out.println("This epic not exist");
+        System.out.println("Epic doesn't exist");
         return null;
     }
 
@@ -220,6 +220,7 @@ public class InMemoryTaskManager implements TaskManager {
             epicMap.remove(id);
             historyManager.remove(id);
             for (Subtask subtask : epicSubtasks) {
+                historyManager.remove(subtask.getId());
                 subtaskMap.remove(subtask.getId());
             }
         }
@@ -231,7 +232,7 @@ public class InMemoryTaskManager implements TaskManager {
             Subtask subtask = subtaskMap.get(id);
             historyManager.remove(id);
             if (subtask == null) {
-                System.out.println("Subtask not exist");
+                System.out.println("Subtask doesn't exist");
             } else {
                 Integer epicId = subtask.getEpicId();
                 historyManager.remove(id);
