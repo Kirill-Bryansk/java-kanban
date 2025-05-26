@@ -73,6 +73,9 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void clearTask() {
+        for (Integer taskId : taskMap.keySet()) {
+            historyManager.remove(taskId);
+        }
         taskMap.clear();
     }
 
@@ -197,6 +200,7 @@ public class InMemoryTaskManager implements TaskManager {
     public void deleteTaskById(Integer id) {
         if (id != null) {
             taskMap.remove(id);
+            historyManager.remove(id);
         }
     }
 
@@ -205,6 +209,7 @@ public class InMemoryTaskManager implements TaskManager {
         if (id != null) {
             ArrayList<Subtask> epicSubtasks = epicMap.get(id).getSubtaskList();
             epicMap.remove(id);
+            historyManager.remove(id);
             for (Subtask subtask : epicSubtasks) {
                 subtaskMap.remove(subtask.getId());
             }
@@ -215,13 +220,19 @@ public class InMemoryTaskManager implements TaskManager {
     public void deleteSubtaskById(Integer id) {
         if (id != null) {
             Subtask subtask = subtaskMap.get(id);
-            Integer epicId = subtask.getEpicId();
-            subtaskMap.remove(id);
-            Epic epic = epicMap.get(epicId);
-            ArrayList<Subtask> newSubtaskList = epic.getSubtaskList();
-            newSubtaskList.remove(subtask);
-            epic.setSubtaskList(newSubtaskList);
-            updateEpicStatus(epic);
+            historyManager.remove(id);
+            if (subtask == null) {
+                System.out.println("Subtask not exist");
+            } else {
+                Integer epicId = subtask.getEpicId();
+                historyManager.remove(id);
+                subtaskMap.remove(id);
+                Epic epic = epicMap.get(epicId);
+                ArrayList<Subtask> newSubtaskList = epic.getSubtaskList();
+                newSubtaskList.remove(subtask);
+                epic.setSubtaskList(newSubtaskList);
+                updateEpicStatus(epic);
+            }
         }
     }
 

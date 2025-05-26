@@ -9,14 +9,13 @@ import java.util.Map;
 
 public class InMemoryHistoryManager implements HistoryManager {
     private final Map<Integer, Node> historyMap = new HashMap<>();
-    Node head;
-    Node tail;
+    private Node head;
+    private Node tail;
 
     @Override
     public void add(Task task) {
         if (historyMap.containsKey(task.getId())) {
-            Node removeNode = historyMap.get(task.getId());
-            removeNode(removeNode);
+            removeNode(task.getId());
         } else {
             linkLast(task);
             Node newNode = tail;
@@ -31,10 +30,7 @@ public class InMemoryHistoryManager implements HistoryManager {
 
     @Override
     public void remove(int id) {
-        if (historyMap.containsKey(id)) {
-            Node node = historyMap.get(id);
-            removeNode(node);
-        }
+        removeNode(id);
     }
 
     private void linkLast(Task task) {
@@ -48,17 +44,22 @@ public class InMemoryHistoryManager implements HistoryManager {
         }
     }
 
-    public List getTasks() {
-        List historyList = new ArrayList<>();
+    private List<Task> getTasks() {
+        List<Task> historyList = new ArrayList<>();
         Node saveNode = head;
         while (saveNode != null) {
-            historyList.add(saveNode.iteam);
+            historyList.add(saveNode.task);
             saveNode = saveNode.next;
         }
         return historyList;
     }
 
-    public void removeNode(Node node) {
+    private void removeNode(int id) {
+        Node node = historyMap.remove(id);
+        if (node == null) {
+            System.out.println("Node is exist");
+            return;
+        }
         if (node == head) {
             head = node.next;
             if (head != null) {
@@ -77,17 +78,18 @@ public class InMemoryHistoryManager implements HistoryManager {
             node.prev.next = node.next;
             node.next.prev = node.prev;
         }
-        historyMap.remove(node.iteam.getId());
+        historyMap.remove(node.task.getId());
     }
 
     private static class Node {
-        Task iteam;
+
         Node next;
+        Task task;
         Node prev;
 
-        public Node(Node prev, Task iteam, Node next) {
-            this.iteam = iteam;
+        public Node(Node prev, Task task, Node next) {
             this.next = next;
+            this.task = task;
             this.prev = prev;
         }
     }

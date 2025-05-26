@@ -45,6 +45,12 @@ public class Main {
         System.out.println(manager.getEpicById(6));
 
         System.out.println("-".repeat(10));
-        System.out.println(manager.getHistory().toString().replaceAll("[\\[\\]]", "").replace(',', '\n'));
+        System.out.println(manager.getHistory().toString().replaceAll("[\\[\\]]", "")); //.replace(',', '\n'))
+        manager.deleteEpicById(3);
+        manager.deleteSubtaskById(5);
+        manager.deleteTaskById(2);
+        System.out.println("-".repeat(10));
+        System.out.println(manager.getHistory().toString().replaceAll("[\\[\\]]", ""));
+
     }
 }
