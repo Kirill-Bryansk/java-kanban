@@ -30,9 +30,6 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     private void linkLast(Task task) {
-        if (historyMap.containsKey(task.getId())) {
-            removeNode(task.getId());
-        }
         final Node oldTail = tail;
         final Node newNode = new Node(oldTail, task, null);
         tail = newNode;
