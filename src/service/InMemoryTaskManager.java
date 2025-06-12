@@ -21,6 +21,7 @@ public class InMemoryTaskManager implements TaskManager {
     protected void setCount(int currentMaxId) {
         this.count = currentMaxId;
     }
+
     private final HistoryManager historyManager = Managers.getDefaultHistory();
 
     @Override
