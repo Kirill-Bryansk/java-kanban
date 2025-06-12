@@ -21,7 +21,7 @@ public class Main {
         System.out.println(manager.getTaskMap());
         System.out.println(manager.getEpicMap());
         System.out.println(manager.getSubtaskMap());
-        // Изменяю статус ru.yandex.java_canban.model.Task
+        // Изменяю статус ru.yandex.java_kanban.model.Task
         manager.changeStatus(1, Status.DONE);
         manager.changeStatus(2, Status.IN_PROGRESS);
         // Изменяю статус SubTask
@@ -32,7 +32,7 @@ public class Main {
         System.out.println("---------");
         manager.updateSubtask(manager.getSubtaskById(10));
         System.out.println("---------");
-        // Расчитываю статус ru.yandex.java_canban.model.Epic
+        // Расчитываю статус ru.yandex.java_kanban.model.Epic
         manager.updateEpicStatus(epic1);
         manager.updateEpicStatus(epic2);
         // Печатаю после изменений

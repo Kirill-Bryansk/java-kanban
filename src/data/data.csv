@@ -1,8 +1,0 @@
-id,type,name,status,description,epicId
-1,TASK,Задача 1,Выполнить 1 задачу,NEW,
-2,TASK,Задача 2,Выполнить 2 задачу,NEW,
-3,EPIC,Epic 1,Первый эпик,NEW,
-4,EPIC,Epic 2,Второй эпик,NEW,
-5,SUBTASK,Подзадача 1 для Epic 1,Выполнить подзадачу 1,NEW,3,
-6,SUBTASK,Подзадача 2 для Epic 1,Выполнить подзадачу 2,NEW,3,
-7,SUBTASK,Подзадача 3 для Epic 1,Выполнить подзадачу 3,NEW,3,

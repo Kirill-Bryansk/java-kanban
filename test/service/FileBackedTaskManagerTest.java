@@ -4,6 +4,7 @@ import model.Epic;
 import model.Subtask;
 import model.Task;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -13,7 +14,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static service.FileBackedTaskManager.loadFromFile;
-
 
 class FileBackedTaskManagerTest {
     private File tempFile;
@@ -41,14 +41,13 @@ class FileBackedTaskManagerTest {
 
     @Test
     void saveAndLoadEmptyFile() {
-        FileBackedTaskManager managerEmpty = createTaskManager();
         FileBackedTaskManager loadedManager = Managers.getFileBackedTaskManager(tempFile);
         assertTrue(loadedManager.getTaskMap()
-                .isEmpty(), "loadedManager должени быть пуст");
+                .isEmpty(), "loadedManager должен быть пуст");
         assertTrue(loadedManager.getEpicMap()
-                .isEmpty(), "loadedManager должени быть пуст");
+                .isEmpty(), "loadedManager должен быть пуст");
         assertTrue(loadedManager.getSubtaskMap()
-                .isEmpty(), "loadedManager должени быть пуст");
+                .isEmpty(), "loadedManager должен быть пуст");
     }
 
     @Test
@@ -66,16 +65,42 @@ class FileBackedTaskManagerTest {
         TaskManager loadedManager = loadFromFile(tempFile);
         List<Task> loadedTasks = loadedManager.getTaskMap();
         List<Epic> loadedEpics = loadedManager.getEpicMap();
-        List<Subtask> loadedSubTasks = loadedManager.getSubtaskMap();
+        List<Subtask> loadedSubtasks = loadedManager.getSubtaskMap();
 
         assertEquals(2, loadedTasks.size(), "Должно быть 2 задачи");
         assertEquals(1, loadedEpics.size(), "Должен быть один эпик");
-        assertEquals(1, loadedSubTasks.size(), "Должна быть одна подзадача");
+        assertEquals(1, loadedSubtasks.size(), "Должна быть одна подзадача");
+
+        Task loadedTaskOne = loadedTasks.get(0);
+        Task loadedTaskTwo = loadedTasks.get(1);
+        Epic loadedEpicOne = loadedManager.getEpicById(3);
+        Subtask loadedSubtaskOne = loadedManager.getSubtaskById(4);
 
         assertTrue(loadedTasks.contains(taskOne), "Задача 1 должна быть загружена");
+        Assertions.assertEquals(taskOne.getType(), loadedTaskOne.getType());
+        Assertions.assertEquals(taskOne.getName(), loadedTaskOne.getName());
+        Assertions.assertEquals(taskOne.getDescription(), loadedTaskOne.getDescription());
+        Assertions.assertEquals(taskOne.getStatus(), loadedTaskOne.getStatus());
+
         assertTrue(loadedTasks.contains(taskTwo), "Задача 2 должна быть загружена");
+        Assertions.assertEquals(taskTwo.getType(), loadedTaskTwo.getType());
+        Assertions.assertEquals(taskTwo.getName(), loadedTaskTwo.getName());
+        Assertions.assertEquals(taskTwo.getDescription(), loadedTaskTwo.getDescription());
+        Assertions.assertEquals(taskTwo.getStatus(), loadedTaskTwo.getStatus());
+
         assertTrue(loadedEpics.contains(epicOne), "Эпик 1 должн быть загружена");
-        assertTrue(loadedSubTasks.contains(subtaskOne), "Подзадача 1 должна быть загружена");
+        Assertions.assertEquals(epicOne.getType(), loadedEpicOne.getType());
+        Assertions.assertEquals(epicOne.getName(), loadedEpicOne.getName());
+        Assertions.assertEquals(epicOne.getDescription(), loadedEpicOne.getDescription());
+        Assertions.assertEquals(epicOne.getStatus(), loadedEpicOne.getStatus());
+        Assertions.assertEquals(epicOne.getSubtaskList(), loadedEpicOne.getSubtaskList());
+
+        assertTrue(loadedSubtasks.contains(subtaskOne), "Подзадача 1 должна быть загружена");
+        Assertions.assertEquals(subtaskOne.getType(), loadedSubtaskOne.getType());
+        Assertions.assertEquals(subtaskOne.getName(), loadedSubtaskOne.getName());
+        Assertions.assertEquals(subtaskOne.getDescription(), loadedSubtaskOne.getDescription());
+        Assertions.assertEquals(subtaskOne.getStatus(), loadedSubtaskOne.getStatus());
+        Assertions.assertEquals(subtaskOne.getEpicId(), loadedSubtaskOne.getEpicId());
     }
 
     @Test

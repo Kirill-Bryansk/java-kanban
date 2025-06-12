@@ -7,7 +7,7 @@ import model.*;
 import java.io.*;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
-    private File file;
+    private final File file;
     private static final String CSV_FILE = "id,type,name,status,description,epicId";
 
     public FileBackedTaskManager(File file) {
@@ -33,21 +33,12 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         }
     }
 
-    private static Type getType(Task task) {
-        if (task instanceof Epic) {
-            return Type.EPIC;
-        } else if (task instanceof Subtask) {
-            return Type.SUBTASK;
-        }
-        return Type.TASK;
-    }
-
     private String toString(Task task) {
         if (task instanceof Subtask) {
-            return String.format("%s,%s,%s,%s,%s,%s,", task.getId(), getType(task), task.getName(),
+            return String.format("%s,%s,%s,%s,%s,%s,", task.getId(), task.getType(), task.getName(),
                     task.getDescription(), task.getStatus(), ((Subtask) task).getEpicId());
         } else {
-            return String.format("%s,%s,%s,%s,%s,", task.getId(), getType(task), task.getName(),
+            return String.format("%s,%s,%s,%s,%s,", task.getId(), task.getType(), task.getName(),
                     task.getDescription(), task.getStatus());
         }
     }
@@ -59,27 +50,34 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             bufferedReader.readLine();
 
             String line;
-            int currentMaxId = 0;
+            int currentMaxId = 1;
 
             while ((line = bufferedReader.readLine()) != null) {
                 Task task = fromLoadString(line);
-                Type type = getType(task);
+                Type type = task.getType();
                 if (task.getId() > currentMaxId) {
                     currentMaxId = task.getId();
                 }
                 switch (type) {
-                    case EPIC -> taskManager.putEpic((Epic) task); // Добавил в мап
+                    case EPIC -> taskManager.epicMap.put(task.getId(), (Epic) task);
                     case SUBTASK -> taskManager.putSubtask((Subtask) task);
-                    case TASK -> taskManager.putTask(task);
+                    case TASK -> taskManager.taskMap.put(task.getId(), task);
                     default -> throw new IllegalArgumentException("Тип задачи не определен: " + type);
                 }
             }
-            taskManager.setMaxId(currentMaxId);
+            taskManager.count = currentMaxId;
             return taskManager;
         } catch (IOException exception) {
             throw new ManagerLoadException("Ошибка загрузки файлов" + exception.getMessage());
         }
+    }
 
+    private void putSubtask(Subtask subtask) {
+        subtaskMap.put(subtask.getId(), subtask);
+        Epic relatedEpic = epicMap.get(subtask.getEpicId());
+        if (relatedEpic != null) {
+            relatedEpic.addSubtaskList(subtask);
+        }
     }
 
     private static Task fromLoadString(String line) {
@@ -117,28 +115,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             }
             default -> throw new IllegalArgumentException("Тип задачи не определен: " + type);
         }
-    }
-
-    private void putTask(Task task) {
-        taskMap.put(task.getId(), task);
-    }
-
-    private void putEpic(Epic epic) {
-        epicMap.put(epic.getId(), epic);
-        updateEpicStatus(epic);
-    }
-
-    private void putSubtask(Subtask subtask) {
-        subtaskMap.put(subtask.getId(), subtask);
-        Epic relatedEpic = epicMap.get(subtask.getEpicId());
-        if (relatedEpic != null) {
-            relatedEpic.addSubtaskList(subtask);
-            updateEpicStatus(relatedEpic);
-        }
-    }
-
-    private void setMaxId(int currentMaxId) {
-        setCount(currentMaxId);
     }
 
     @Override
@@ -245,9 +221,12 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         Epic epicOne = taskManager.addEpic(new Epic("Epic 1", "Первый эпик"));
         taskManager.addEpic(new Epic("Epic 2", "Второй эпик"));
 
-        taskManager.addSubtask(new Subtask("Подзадача 1 для Epic 1", "Выполнить подзадачу 1", epicOne.getId()));
-        taskManager.addSubtask(new Subtask("Подзадача 2 для Epic 1", "Выполнить подзадачу 2", epicOne.getId()));
-        taskManager.addSubtask(new Subtask("Подзадача 3 для Epic 1", "Выполнить подзадачу 3", epicOne.getId()));
+        taskManager.addSubtask(new Subtask("Подзадача 1 для Epic 1", "Выполнить подзадачу 1",
+                epicOne.getId()));
+        taskManager.addSubtask(new Subtask("Подзадача 2 для Epic 1", "Выполнить подзадачу 2",
+                epicOne.getId()));
+        taskManager.addSubtask(new Subtask("Подзадача 3 для Epic 1", "Выполнить подзадачу 3",
+                epicOne.getId()));
 
         printAllTasks(taskManager);
         taskManager.changeStatus(1, Status.DONE);
@@ -257,6 +236,16 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         taskManager.changeStatus(7, Status.IN_PROGRESS);
         System.out.println("-".repeat(10));
         printAllTasks(taskManager);
+
+        try {
+            PrintWriter writer = new PrintWriter(file);
+            writer.print("");
+            writer.flush();
+            writer.close();
+
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
     }
 
     public static void printAllTasks(TaskManager manager) {

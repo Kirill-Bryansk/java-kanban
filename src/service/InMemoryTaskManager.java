@@ -16,11 +16,7 @@ public class InMemoryTaskManager implements TaskManager {
     protected final HashMap<Integer, Epic> epicMap = new HashMap<>();
     protected final HashMap<Integer, Subtask> subtaskMap = new HashMap<>();
 
-    private int count = 1;
-
-    protected void setCount(int currentMaxId) {
-        this.count = currentMaxId;
-    }
+    protected int count = 1;
 
     private final HistoryManager historyManager = Managers.getDefaultHistory();
 
