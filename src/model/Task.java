@@ -3,27 +3,23 @@ package model;
 import java.util.Objects;
 
 public class Task {
-    private Type type;
     private String name;
     private String description;
     private Integer id;
     private Status status;
 
     public Task(String name, String description) {
-        this.type = Type.TASK;
         this.name = name;
         this.description = description;
     }
 
     public Task(String name, String description, Integer id) {
-        this.type = Type.TASK;
         this.name = name;
         this.description = description;
         this.id = id;
     }
 
     public Task(String name, String description, Integer id, Status status) {
-        this.type = Type.TASK;
         this.name = name;
         this.description = description;
         this.id = id;
@@ -31,7 +27,6 @@ public class Task {
     }
 
     public Task(Type type, String name, String description, Integer id, Status status) {
-        this.type = type;
         this.name = name;
         this.description = description;
         this.id = id;
@@ -63,11 +58,7 @@ public class Task {
     }
 
     public Type getType() {
-        return type;
-    }
-
-    public void setType(Type type) {
-        this.type = type;
+        return Type.TASK;
     }
 
     @Override
