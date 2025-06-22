@@ -53,7 +53,6 @@ public class InMemoryHistoryManager implements HistoryManager {
     private void removeNode(int id) {
         Node node = historyMap.remove(id);
         if (node == null) {
-            System.out.println("Node doesn't exist");
             return;
         }
         if (node == head) {

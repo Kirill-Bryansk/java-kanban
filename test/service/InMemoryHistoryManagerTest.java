@@ -1,5 +1,6 @@
 package service;
 
+import exception.TaskNotFoundException;
 import model.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +56,7 @@ public class InMemoryHistoryManagerTest {
     }
 
     @Test
-    void whenTaskHasDeletedShouldDeleteItFromHistoryList() {
+    void whenTaskHasDeletedShouldDeleteItFromHistoryList() throws TaskNotFoundException {
 
         Task taskOne = new Task("Задача", "Делать", 1, Status.NEW);
         taskManager.addTask(taskOne);

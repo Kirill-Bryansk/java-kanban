@@ -1,5 +1,6 @@
 package service;
 
+import exception.TaskNotFoundException;
 import model.Epic;
 import model.Status;
 import model.Subtask;
@@ -12,7 +13,7 @@ public interface TaskManager {
 
     int getCount();
 
-    List<Task> getHistory();// ПоЧЕу то здесь должен быть гет хистори
+    List<Task> getHistory();
 
     Task addTask(Task task);
 
@@ -32,11 +33,11 @@ public interface TaskManager {
 
     void clearSubtask();
 
-    Task getTaskById(Integer id);
+    Task getTaskById(Integer id) throws TaskNotFoundException;
 
-    Epic getEpicById(Integer id);
+    Epic getEpicById(Integer id) throws TaskNotFoundException;
 
-    Subtask getSubtaskById(Integer id);
+    Subtask getSubtaskById(Integer id) throws TaskNotFoundException;
 
     Task updateTask(Task task);
 
@@ -50,9 +51,11 @@ public interface TaskManager {
 
     void deleteSubtaskById(Integer id);
 
-    ArrayList<Subtask> getSubtaskByEpic(Integer epicId);
+    ArrayList<Subtask> getSubtaskByEpic(Integer epicId) throws TaskNotFoundException;
 
     void updateEpicStatus(Epic epic);
 
     void changeStatus(Integer id, Status status);
+
+    List<Task> getPrioritizedTasks();
 }

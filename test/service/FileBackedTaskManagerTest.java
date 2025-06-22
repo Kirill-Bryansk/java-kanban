@@ -1,5 +1,6 @@
 package service;
 
+import exception.TaskNotFoundException;
 import model.Epic;
 import model.Subtask;
 import model.Task;
@@ -9,13 +10,16 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static service.FileBackedTaskManager.formatter;
 import static service.FileBackedTaskManager.loadFromFile;
 
-class FileBackedTaskManagerTest {
+class FileBackedTaskManagerTest extends TaskManagerTest {
     private File tempFile;
 
     protected FileBackedTaskManager createTaskManager() {
@@ -51,15 +55,20 @@ class FileBackedTaskManagerTest {
     }
 
     @Test
-    void shouldSaveAndLoadMultipleTasks() {
+    void shouldSaveAndLoadMultipleTasks() throws TaskNotFoundException {
         FileBackedTaskManager manager = createTaskManager();
-        Task taskOne = new Task("Задача 1", "Выполнить задачу 1");
+        Task taskOne = new Task("Задача 1", "Выполнить задачу 1",
+                Duration.ofMinutes(10), LocalDateTime.parse(LocalDateTime.now().format(formatter)));
         manager.addTask(taskOne);
-        Task taskTwo = new Task("Задача 2", "Выполнить задачу 2");
+        Task taskTwo = new Task("Задача 2", "Выполнить задачу 2",
+                Duration.ofMinutes(10), LocalDateTime.parse(LocalDateTime.now().plus(Duration.ofMinutes(10)).
+                format(formatter)));
         manager.addTask(taskTwo);
         Epic epicOne = new Epic("Epic 1", "Выполнить эпик 1");
         manager.addEpic(epicOne);
-        Subtask subtaskOne = new Subtask("Подзадача 1", "Выполнить подзадачу 1", epicOne.getId());
+        Subtask subtaskOne = new Subtask("Подзадача №1 эпика №1", "Делать подзадачу №1",
+                Duration.ofMinutes(10), LocalDateTime.parse(LocalDateTime.now().plus(Duration.ofMinutes(20)).
+                format(formatter)), epicOne.getId());
         manager.addSubtask(subtaskOne);
 
         TaskManager loadedManager = loadFromFile(tempFile);
@@ -81,12 +90,16 @@ class FileBackedTaskManagerTest {
         Assertions.assertEquals(taskOne.getName(), loadedTaskOne.getName());
         Assertions.assertEquals(taskOne.getDescription(), loadedTaskOne.getDescription());
         Assertions.assertEquals(taskOne.getStatus(), loadedTaskOne.getStatus());
+        Assertions.assertEquals(taskOne.getStartTime(), loadedTaskOne.getStartTime());
+        Assertions.assertEquals(taskOne.getDuration(), loadedTaskOne.getDuration());
 
         assertTrue(loadedTasks.contains(taskTwo), "Задача 2 должна быть загружена");
         Assertions.assertEquals(taskTwo.getType(), loadedTaskTwo.getType());
         Assertions.assertEquals(taskTwo.getName(), loadedTaskTwo.getName());
         Assertions.assertEquals(taskTwo.getDescription(), loadedTaskTwo.getDescription());
         Assertions.assertEquals(taskTwo.getStatus(), loadedTaskTwo.getStatus());
+        Assertions.assertEquals(taskTwo.getStartTime(), loadedTaskTwo.getStartTime());
+        Assertions.assertEquals(taskTwo.getDuration(), loadedTaskTwo.getDuration());
 
         assertTrue(loadedEpics.contains(epicOne), "Эпик 1 должн быть загружена");
         Assertions.assertEquals(epicOne.getType(), loadedEpicOne.getType());
@@ -94,6 +107,9 @@ class FileBackedTaskManagerTest {
         Assertions.assertEquals(epicOne.getDescription(), loadedEpicOne.getDescription());
         Assertions.assertEquals(epicOne.getStatus(), loadedEpicOne.getStatus());
         Assertions.assertEquals(epicOne.getSubtaskList(), loadedEpicOne.getSubtaskList());
+        Assertions.assertEquals(epicOne.getStartTime(), loadedEpicOne.getStartTime());
+        Assertions.assertEquals(epicOne.getDuration(), loadedEpicOne.getDuration());
+        Assertions.assertEquals(epicOne.getEndTime(), loadedEpicOne.getEndTime());
 
         assertTrue(loadedSubtasks.contains(subtaskOne), "Подзадача 1 должна быть загружена");
         Assertions.assertEquals(subtaskOne.getType(), loadedSubtaskOne.getType());
@@ -101,6 +117,8 @@ class FileBackedTaskManagerTest {
         Assertions.assertEquals(subtaskOne.getDescription(), loadedSubtaskOne.getDescription());
         Assertions.assertEquals(subtaskOne.getStatus(), loadedSubtaskOne.getStatus());
         Assertions.assertEquals(subtaskOne.getEpicId(), loadedSubtaskOne.getEpicId());
+        Assertions.assertEquals(subtaskOne.getStartTime(), loadedSubtaskOne.getStartTime());
+        Assertions.assertEquals(subtaskOne.getDuration(), loadedSubtaskOne.getDuration());
     }
 
     @Test
