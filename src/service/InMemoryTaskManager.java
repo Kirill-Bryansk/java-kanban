@@ -104,11 +104,10 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void clearTask() {
-        taskMap.values().
-                forEach(task -> {
-                    historyManager.remove(task.getId());
-                    prioritizedTasks.remove(task);
-                });
+        taskMap.values().forEach(task -> {
+            historyManager.remove(task.getId());
+            prioritizedTasks.remove(task);
+        });
         taskMap.clear();
     }
 
@@ -118,8 +117,7 @@ public class InMemoryTaskManager implements TaskManager {
                 .map(Subtask::getId)
                 .forEach(historyManager::remove);
 
-        epicMap.keySet().
-                forEach(historyManager::remove);
+        epicMap.keySet().forEach(historyManager::remove);
 
         taskMap.clear();
         subtaskMap.clear();
@@ -128,19 +126,17 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void clearSubtask() {
-        subtaskMap.keySet().
-                forEach(key -> {
-                    historyManager.remove(key);
-                    prioritizedTasks.remove(subtaskMap.get(key));
-                });
+        subtaskMap.keySet().forEach(key -> {
+            historyManager.remove(key);
+            prioritizedTasks.remove(subtaskMap.get(key));
+        });
         subtaskMap.clear();
 
-        epicMap.values().
-                forEach(epic -> {
-                    epic.clearSubtaskList();
-                    epic.setStatus(Status.NEW);
-                    calculateEpicDuration(epic.getId());
-                });
+        epicMap.values().forEach(epic -> {
+            epic.clearSubtaskList();
+            epic.setStatus(Status.NEW);
+            calculateEpicDuration(epic.getId());
+        });
     }
 
     @Override
@@ -220,14 +216,12 @@ public class InMemoryTaskManager implements TaskManager {
 
         Epic existentEpic = epicMap.get(epic.getId());
 
-        existentEpic.getSubtaskList().
-                forEach(subtask -> subtaskMap.remove(subtask.getId()));
+        existentEpic.getSubtaskList().forEach(subtask -> subtaskMap.remove(subtask.getId()));
 
         epicMap.replace(epic.getId(), epic);
 
         ArrayList<Subtask> newEpicSubtaskList = epic.getSubtaskList();
-        newEpicSubtaskList.
-                forEach(subtask -> subtaskMap.put(subtask.getId(), subtask));
+        newEpicSubtaskList.forEach(subtask -> subtaskMap.put(subtask.getId(), subtask));
 
         updateEpicStatus(epic);
         return epic;
