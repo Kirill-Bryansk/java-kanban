@@ -3,7 +3,6 @@ package service;
 import model.Task;
 
 import java.util.Comparator;
-import java.util.Optional;
 
 public class TimeComparator implements Comparator<Task> {
     @Override
