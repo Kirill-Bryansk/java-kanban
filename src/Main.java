@@ -1,14 +1,14 @@
+import service.*;
 import exception.TaskNotFoundException;
 import model.*;
-import service.*;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 
 public class Main {
 
-    public static void main(String[] args) throws TaskNotFoundException {
-        TaskManager manager = Managers.getDefault();
+    public static void main(String[] args) {
+        TaskManager manager = new InMemoryTaskManager(new InMemoryHistoryManager());
         // Две задачи
         manager.addTask(new Task("Задача 1", "Выполнить 1 задачу",
                 Duration.ofMinutes(10), LocalDateTime.of(2025, 7, 1, 0, 10)));

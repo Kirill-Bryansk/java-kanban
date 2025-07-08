@@ -19,11 +19,16 @@ public class InMemoryTaskManager implements TaskManager {
 
     protected int count = 1;
 
-    private final HistoryManager historyManager = Managers.getDefaultHistory();
+    private final HistoryManager historyManager; // инициализация без конструктора = Managers.getDefaultHistory();
 
     private final TimeComparator timeComparator = new TimeComparator();
 
     public TreeSet<Task> prioritizedTasks = new TreeSet<>(timeComparator);
+
+    // Cоздаю конструктор для связи истории с менеджером
+    public InMemoryTaskManager(HistoryManager historyManager) {
+        this.historyManager = historyManager;
+    }
 
     @Override
     public List<Task> getHistory() {
@@ -37,7 +42,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Task addTask(Task task) throws ManagerErrorSaveTaskTime {
-        try {
+       /* try {
             if (hasTimeOverlapWithPrioritizedTasks(task)) {
                 throw new ManagerErrorSaveTaskTime("The task was not saved, change the start time");
             }
@@ -49,7 +54,16 @@ public class InMemoryTaskManager implements TaskManager {
         } catch (ManagerErrorSaveTaskTime e) {
             System.err.println("Error saving the task: " + e.getMessage());
             return null;
+        }*/
+        if (hasTimeOverlapWithPrioritizedTasks(task)) {
+            throw new ManagerErrorSaveTaskTime("The task was not saved, change the start time");
         }
+        task.setId(getCount());
+        task.setStatus(Status.NEW);
+        taskMap.put(task.getId(), task);
+        prioritizedTasks.add(task);
+        return task;
+
     }
 
     @Override
@@ -57,6 +71,7 @@ public class InMemoryTaskManager implements TaskManager {
         try {
             epic.setId(getCount());
             epic.setStatus(Status.NEW);
+            //epic.addSubtaskList(new ArrayList<Subtask>());
             epicMap.put(epic.getId(), epic);
             return epic;
         } catch (Exception e) {
@@ -68,23 +83,32 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Subtask addSubtask(Subtask subtask) throws ManagerErrorSaveTaskTime {
-        try {
+
+
+        /*try {
             if (hasTimeOverlapWithPrioritizedTasks(subtask)) {
                 throw new ManagerErrorSaveTaskTime("The subtask was not saved, change the start time");
-            }
-            subtask.setId(getCount());
-            subtask.setStatus(Status.NEW);
-            subtaskMap.put(subtask.getId(), subtask);
-            epicMap.get(subtask.getEpicId()).addSubtaskList(subtask);
-            Epic epic = epicMap.get(subtask.getEpicId());
-            updateEpicStatus(epic);
-            calculateEpicDuration(epic.getId());
-            prioritizedTasks.add(subtask);
-            return subtask;
-        } catch (ManagerErrorSaveTaskTime e) {
+            }*/
+        subtask.setId(getCount());
+        subtask.setStatus(Status.NEW);
+        subtaskMap.put(subtask.getId(), subtask);
+        System.out.println(subtask);
+
+        Epic epic = epicMap.get(subtask.getEpicId());
+        // После гет работает скорее вссего проблема в вызовах менаджеров
+        epicMap.get(subtask.getEpicId()).addSubtaskList(subtask);// тут ошибка,
+            /*if (epic.getSubtaskList().equals("null")) { // сомнительный метод уйти от ошибки при загрузке с сервера
+                epic.setSubtaskList(new ArrayList<>());
+            }*/
+        //epic.addSubtaskList(subtask);
+        updateEpicStatus(epic);
+        calculateEpicDuration(epic.getId());
+        prioritizedTasks.add(subtask);
+        return subtask;
+      /*  } catch (ManagerErrorSaveTaskTime e) {
             System.err.println("Error saving the subtask: " + e.getMessage());
             return null;
-        }
+        }*/
     }
 
     @Override
@@ -123,7 +147,6 @@ public class InMemoryTaskManager implements TaskManager {
         subtaskMap.clear();
     }
 
-
     @Override
     public void clearSubtask() {
         subtaskMap.keySet().forEach(key -> {
@@ -140,32 +163,40 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Task getTaskById(Integer id) throws TaskNotFoundException {
-        if (id <= 0) {
-            throw new IllegalArgumentException("Id must be greater than 0");
-        }
-
-        Task task = taskMap.get(id);
-        if (task != null) {
-            historyManager.add(task);
-            return task;
-        } else {
-            throw new TaskNotFoundException("Task with id " + id + " does not exist");
+    public Task getTaskById(Integer id) {
+        try {
+            if (id <= 0) {
+                throw new IllegalArgumentException("Id must be greater than 0");
+            }
+            Task task = taskMap.get(id);
+            if (task != null) {
+                historyManager.add(task);
+                return task;
+            } else {
+                throw new TaskNotFoundException("Task with id " + id + " does not exist");
+            }
+        } catch (IllegalArgumentException | TaskNotFoundException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
     @Override
-    public Epic getEpicById(Integer id) throws TaskNotFoundException {
-        if (id <= 0) {
-            throw new IllegalArgumentException("Id must be greater than 0");
-        }
-
-        Epic epic = epicMap.get(id);
-        if (epic != null) {
-            historyManager.add(epic);
-            return epic;
-        } else {
-            throw new TaskNotFoundException("Epic with id " + id + " does not exist");
+    public Epic getEpicById(Integer id) {
+        try {
+            if (id <= 0) {
+                throw new IllegalArgumentException("Id must be greater than 0");
+            }
+            Epic epic = epicMap.get(id);
+            if (epic != null) {
+                historyManager.add(epic);
+                return epic;
+            } else {
+                throw new TaskNotFoundException("Epic with id " + id + " does not exist");
+            }
+        } catch (IllegalArgumentException | TaskNotFoundException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
