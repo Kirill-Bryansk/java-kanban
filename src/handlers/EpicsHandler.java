@@ -15,7 +15,7 @@ public class EpicsHandler extends BaseHttpHandler {
     }
 
     @Override
-    protected void handelGet(HttpExchange exchange, String body) throws IOException {
+    protected void handleGet(HttpExchange exchange, String body) throws IOException {
         BaseHttpHandler.IdRequest idRequest = gson.fromJson(body, IdRequest.class);
         if (idRequest == null) {
             sendText(exchange, gson.toJson(taskManager.getSubtaskMap()), 200);
@@ -44,7 +44,7 @@ public class EpicsHandler extends BaseHttpHandler {
                 sendText(exchange, "Эпик добавлен", 201);
             } else {
                 taskManager.updateEpic(epic);
-                sendText(exchange, "Эпик обновлен", 201);
+                sendText(exchange, "Эпик обновлен", 200);
             }
         } catch (ManagerErrorSaveTaskTime errorSaveTaskTime) {
             send406Error(exchange, errorSaveTaskTime.getMessage());
@@ -59,8 +59,18 @@ public class EpicsHandler extends BaseHttpHandler {
             sendText(exchange, "Все эпики удалены", 200);
         } else {
             int epicId = idRequest.getId();
-            taskManager.deleteEpicById(epicId);
-            sendText(exchange, "Эпик удален", 200);
+            try {
+                Epic epic = taskManager.getEpicById(epicId);
+                if (epic == null) {
+                    send404Error(exchange, "Эпик с номером id: " + epicId + " не найден");
+                    return;
+                }
+                taskManager.deleteEpicById(epicId);
+                sendText(exchange, "Эпик удален", 200);
+            } catch (TaskNotFoundException e) {
+                send404Error(exchange, "Ошибка при удалении эпика: " + e.getMessage());
+            }
         }
     }
 }
+

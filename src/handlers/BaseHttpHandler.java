@@ -36,7 +36,7 @@ public class BaseHttpHandler implements HttpHandler {
 
             switch (requestMethod) {
                 case "GET":
-                    handelGet(exchange, body);
+                    handleGet(exchange, body);
                     break;
                 case "POST":
                     handlePost(exchange, body);
@@ -55,7 +55,7 @@ public class BaseHttpHandler implements HttpHandler {
         }
     }
 
-    protected void handelGet(HttpExchange exchange, String body) throws IOException {
+    protected void handleGet(HttpExchange exchange, String body) throws IOException {
     }
 
     protected void handlePost(HttpExchange exchange, String body) throws IOException {

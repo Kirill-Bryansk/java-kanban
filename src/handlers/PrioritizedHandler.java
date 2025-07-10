@@ -12,7 +12,7 @@ public class PrioritizedHandler extends BaseHttpHandler {
     }
 
     @Override
-    protected void handelGet(HttpExchange exchange, String body) throws IOException {
+    protected void handleGet(HttpExchange exchange, String body) throws IOException {
         BaseHttpHandler.IdRequest idRequest = gson.fromJson(body, IdRequest.class);
         if (idRequest == null) {
             sendText(exchange, gson.toJson(taskManager.getPrioritizedTasks()), 200);

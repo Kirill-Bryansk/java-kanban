@@ -14,7 +14,7 @@ public class TasksHandler extends BaseHttpHandler {
     }
 
     @Override
-    protected void handelGet(HttpExchange exchange, String body) throws IOException {
+    protected void handleGet(HttpExchange exchange, String body) throws IOException {
         IdRequest idRequest = gson.fromJson(body, IdRequest.class);
         if (idRequest == null) {
             sendText(exchange, gson.toJson(taskManager.getTaskMap()), 200);
@@ -43,7 +43,7 @@ public class TasksHandler extends BaseHttpHandler {
                 sendText(exchange, "Задача добавлена", 201);
             } else {
                 taskManager.updateTask(task);
-                sendText(exchange, "Задача обновлена", 201);
+                sendText(exchange, "Задача обновлена", 200);
             }
         } catch (ManagerErrorSaveTaskTime errorSaveTaskTime) {
             send406Error(exchange, errorSaveTaskTime.getMessage());

@@ -18,10 +18,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
     static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
-    /*public FileBackedTaskManager(File file) {
-        this.file = file;
-    }*/
-
     public FileBackedTaskManager(HistoryManager historyManager, File file) {
         super(historyManager);
         this.file = file;
@@ -74,13 +70,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
 
                     if (line.startsWith("Список id истории просмотров:")) {
                         String[] identifier = line.substring("Список id истории просмотров:".length()).split(",");
-                        for (String id : identifier) {
-                            if (!id.trim().isEmpty()) {
-                                taskManager.getTaskById(Integer.parseInt(id));
-                                taskManager.getEpicById(Integer.parseInt(id));
-                                taskManager.getSubtaskById(Integer.parseInt(id));
-                            }
-                        }
+                        loadHistory(taskManager, identifier);
                     } else {
                         Task task = fromLoadString(line);
                         Type type = task.getType();
@@ -89,8 +79,14 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                         }
                         switch (type) {
                             case EPIC -> taskManager.epicMap.put(task.getId(), (Epic) task);
-                            case SUBTASK -> taskManager.putSubtask((Subtask) task);
-                            case TASK -> taskManager.taskMap.put(task.getId(), task);
+                            case SUBTASK -> {
+                                taskManager.putSubtask((Subtask) task);
+                                taskManager.addTaskPriorityList(task); // Добавление задачи в приоритетный список для subtask
+                            }
+                            case TASK -> {
+                                taskManager.taskMap.put(task.getId(), task);
+                                taskManager.addTaskPriorityList(task); // Добавление задачи в приоритетный список для task
+                            }
                             default -> throw new IllegalArgumentException("Тип задачи не определён: " + type);
                         }
                     }
@@ -102,52 +98,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 throw new ManagerLoadException("Ошибка загрузки файлов " + exception.getMessage());
             }
         }
-
-
-
-       /* FileBackedTaskManager taskManager = new FileBackedTaskManager(new InMemoryHistoryManager(),file);
-
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
-            bufferedReader.readLine();
-
-            String line;
-            int currentMaxId = 1;
-
-            while ((line = bufferedReader.readLine()) != null) {
-
-                if (line.equals((CSV_FILE.trim()))) continue;
-
-                if (line.startsWith("Список id истории просмотров:")) {
-                    String[] identifier = line.substring("Список id истории просмотров:".length()).split(",");
-                    for (String id : identifier) {
-                        if (!id.trim().isEmpty()) {
-                            taskManager.getTaskById(Integer.parseInt(id));
-                            taskManager.getEpicById(Integer.parseInt(id));
-                            taskManager.getSubtaskById(Integer.parseInt(id));
-                        }
-                    }
-                    continue;
-                }
-            }
-
-            while ((line = bufferedReader.readLine()) != null) {
-                Task task = fromLoadString(line);
-                Type type = task.getType();
-                if (task.getId() > currentMaxId) {
-                    currentMaxId = task.getId();
-                }
-                switch (type) {
-                    case EPIC -> taskManager.epicMap.put(task.getId(), (Epic) task);
-                    case SUBTASK -> taskManager.putSubtask((Subtask) task);
-                    case TASK -> taskManager.taskMap.put(task.getId(), task);
-                    default -> throw new IllegalArgumentException("Тип задачи не определен: " + type);
-                }
-            }
-            taskManager.count = currentMaxId;
-            return taskManager;
-        } catch (IOException exception) {
-            throw new ManagerLoadException("Ошибка загрузки файлов " + exception.getMessage());
-        }*/
 
     private void putSubtask(Subtask subtask) {
         subtaskMap.put(subtask.getId(), subtask);
@@ -287,6 +237,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     @Override
     public Subtask updateSubtask(Subtask subtask) {
         super.updateSubtask(subtask);
+        save();
         return subtask;
     }
 
@@ -313,80 +264,20 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         super.changeStatus(id, status);
     }
 
-    public static void main(String[] args) {
-        System.out.println("----------------");
-
-        File file = new File("src/data/data.csv");
-        TaskManager taskManager;
-
-        if (file.exists()) {
-            taskManager = loadFromFile(file);
-            System.out.println("Загрука данных в " + file.getName());
-        } else {
-            taskManager = Managers.getFileBackedTaskManager(file);
-            System.out.println(
-                    "Новый таск менеджер создан. File " + file.getName() +
-                            " будет использоваться для сохранения данных.");
-        }
-
-        taskManager.addTask(new Task("Задача 1", "Выполнить 1 задачу"));
-        taskManager.addTask(new Task("Задача 2", "Выполнить 2 задачу",
-                Duration.ofMinutes(10), LocalDateTime.of(2025, 7, 7, 0, 10)));
-
-        Epic epicOne = taskManager.addEpic(new Epic("Epic 1", "Первый эпик"));
-        taskManager.addEpic(new Epic("Epic 2", "Второй эпик"));
-
-        taskManager.addSubtask(new Subtask("Подзадача 1 для Epic 1", "Выполнить подзадачу 1",
-                Duration.ofMinutes(10), LocalDateTime.of(2025, 7, 6, 0, 10), epicOne.getId()));
-        taskManager.addSubtask(new Subtask("Подзадача 2 для Epic 1", "Выполнить подзадачу 2",
-                Duration.ofMinutes(10), LocalDateTime.of(2025, 8, 6, 0, 10), epicOne.getId()));
-        taskManager.addSubtask(new Subtask("Подзадача 3 для Epic 1", "Выполнить подзадачу 3",
-                Duration.ofMinutes(10), LocalDateTime.of(2025, 9, 6, 0, 10), epicOne.getId()));
-
-        try {
-            printAllTasks(taskManager);
-        } catch (TaskNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        taskManager.changeStatus(1, Status.DONE);
-        taskManager.changeStatus(2, Status.IN_PROGRESS);
-        taskManager.changeStatus(4, Status.DONE);
-        taskManager.changeStatus(5, Status.DONE);
-        taskManager.changeStatus(7, Status.IN_PROGRESS);
-        System.out.println("-".repeat(10));
-        try {
-            printAllTasks(taskManager);
-        } catch (TaskNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            PrintWriter writer = new PrintWriter(file);
-            writer.print("");
-            writer.flush();
-            writer.close();
-
-        } catch (Exception e) {
-            throw new RuntimeException();
-        }
-    }
-
-    public static void printAllTasks(TaskManager manager) throws TaskNotFoundException {
-        System.out.println("Tasks:");
-        for (Task task : manager.getTaskMap()) {
-            System.out.println(task);
-        }
-        System.out.println("Epics:");
-        for (Task epic : manager.getEpicMap()) {
-            System.out.println(epic);
-
-            for (Task task : manager.getSubtaskByEpic(epic.getId())) {
-                System.out.println("--> " + task);
+    public static void loadHistory(FileBackedTaskManager taskManager, String[] identifier) {
+        for (String id : identifier) {
+            if (!id.trim().isEmpty()) {
+                int taskId = Integer.parseInt(id);
+                if (taskManager.taskMap.containsKey(taskId)) {
+                    taskManager.getTaskById(Integer.parseInt(id));
+                }
+                if (taskManager.epicMap.containsKey(taskId)) {
+                    taskManager.getEpicById(Integer.parseInt(id));
+                }
+                if (taskManager.subtaskMap.containsKey(taskId)) {
+                    taskManager.getSubtaskById(Integer.parseInt(id));
+                }
             }
-        }
-        System.out.println("Subtasks:");
-        for (Task subtask : manager.getSubtaskMap()) {
-            System.out.println(subtask);
         }
     }
 }

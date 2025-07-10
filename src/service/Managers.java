@@ -3,8 +3,6 @@ package service;
 import java.io.File;
 
 public class Managers {
-
-    // Добавил хистори менеджер из за fileBacked связи
     public static TaskManager getDefault(HistoryManager historyManager) {
         return new InMemoryTaskManager(historyManager);
     }
@@ -13,12 +11,8 @@ public class Managers {
         return new InMemoryHistoryManager();
     }
 
-    /*public static FileBackedTaskManager getFileBackedTaskManager(File file) {
-        return new FileBackedTaskManager(file);
-    }*/
-
     public static FileBackedTaskManager getFileBackedTaskManager(File file) {
-        return new FileBackedTaskManager(getDefaultHistory(),file);
+        return new FileBackedTaskManager(getDefaultHistory(), file);
     }
 }
 
