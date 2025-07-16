@@ -91,6 +91,14 @@ public class Task {
         this.startTime = startTime;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public LocalDateTime getEndTime() {
         return startTime.plus(duration);
     }

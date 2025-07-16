@@ -3,9 +3,8 @@ package service;
 import java.io.File;
 
 public class Managers {
-
-    public static TaskManager getDefault() {
-        return new InMemoryTaskManager();
+    public static TaskManager getDefault(HistoryManager historyManager) {
+        return new InMemoryTaskManager(historyManager);
     }
 
     public static HistoryManager getDefaultHistory() {
@@ -13,6 +12,8 @@ public class Managers {
     }
 
     public static FileBackedTaskManager getFileBackedTaskManager(File file) {
-        return new FileBackedTaskManager(file);
+        return new FileBackedTaskManager(getDefaultHistory(), file);
     }
 }
+
+

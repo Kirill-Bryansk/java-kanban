@@ -17,13 +17,17 @@ public class InMemoryTaskManager implements TaskManager {
     protected final HashMap<Integer, Epic> epicMap = new HashMap<>();
     protected final HashMap<Integer, Subtask> subtaskMap = new HashMap<>();
 
-    protected int count = 1;
+    protected int count = 0;
 
-    private final HistoryManager historyManager = Managers.getDefaultHistory();
+    private final HistoryManager historyManager;
 
     private final TimeComparator timeComparator = new TimeComparator();
 
     public TreeSet<Task> prioritizedTasks = new TreeSet<>(timeComparator);
+
+    public InMemoryTaskManager(HistoryManager historyManager) {
+        this.historyManager = historyManager;
+    }
 
     @Override
     public List<Task> getHistory() {
@@ -32,24 +36,21 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public int getCount() {
-        return count++;
+        count += 1;
+        return count;
     }
 
     @Override
     public Task addTask(Task task) throws ManagerErrorSaveTaskTime {
-        try {
-            if (hasTimeOverlapWithPrioritizedTasks(task)) {
-                throw new ManagerErrorSaveTaskTime("The task was not saved, change the start time");
-            }
-            task.setId(getCount());
-            task.setStatus(Status.NEW);
-            taskMap.put(task.getId(), task);
-            prioritizedTasks.add(task);
-            return task;
-        } catch (ManagerErrorSaveTaskTime e) {
-            System.err.println("Error saving the task: " + e.getMessage());
-            return null;
+        if (hasTimeOverlapWithPrioritizedTasks(task)) {
+            throw new ManagerErrorSaveTaskTime("The task was not saved, change the start time");
         }
+        task.setId(getCount());
+        task.setStatus(Status.NEW);
+        taskMap.put(task.getId(), task);
+        prioritizedTasks.add(task);
+        return task;
+
     }
 
     @Override
@@ -57,10 +58,12 @@ public class InMemoryTaskManager implements TaskManager {
         try {
             epic.setId(getCount());
             epic.setStatus(Status.NEW);
+            if (epic.getSubtaskList() == null) {
+                epic.setSubtaskList(new ArrayList<>());
+            }
             epicMap.put(epic.getId(), epic);
             return epic;
         } catch (Exception e) {
-            // Error handling
             System.err.println("Error saving the epic: " + e.getMessage());
             return null;
         }
@@ -68,23 +71,24 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Subtask addSubtask(Subtask subtask) throws ManagerErrorSaveTaskTime {
-        try {
-            if (hasTimeOverlapWithPrioritizedTasks(subtask)) {
-                throw new ManagerErrorSaveTaskTime("The subtask was not saved, change the start time");
-            }
-            subtask.setId(getCount());
-            subtask.setStatus(Status.NEW);
-            subtaskMap.put(subtask.getId(), subtask);
-            epicMap.get(subtask.getEpicId()).addSubtaskList(subtask);
-            Epic epic = epicMap.get(subtask.getEpicId());
-            updateEpicStatus(epic);
-            calculateEpicDuration(epic.getId());
-            prioritizedTasks.add(subtask);
-            return subtask;
-        } catch (ManagerErrorSaveTaskTime e) {
-            System.err.println("Error saving the subtask: " + e.getMessage());
-            return null;
+        if (hasTimeOverlapWithPrioritizedTasks(subtask)) {
+            throw new ManagerErrorSaveTaskTime("The subtask was not saved, change the start time");
         }
+        subtask.setId(getCount());
+        subtask.setStatus(Status.NEW);
+        subtaskMap.put(subtask.getId(), subtask);
+
+        Epic epic = epicMap.get(subtask.getEpicId());
+        if (epic == null) {
+            subtaskMap.remove(subtask.getId(), subtask);
+            count -= 1;
+            throw new IllegalArgumentException("Epic not found for the given epicId. Please create the epic first.");
+        }
+        epic.addSubtaskList(subtask);
+        updateEpicStatus(epic);
+        calculateEpicDuration(epic.getId());
+        prioritizedTasks.add(subtask);
+        return subtask;
     }
 
     @Override
@@ -118,11 +122,9 @@ public class InMemoryTaskManager implements TaskManager {
                 .forEach(historyManager::remove);
 
         epicMap.keySet().forEach(historyManager::remove);
-
-        taskMap.clear();
+        epicMap.clear();
         subtaskMap.clear();
     }
-
 
     @Override
     public void clearSubtask() {
@@ -140,32 +142,40 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Task getTaskById(Integer id) throws TaskNotFoundException {
-        if (id <= 0) {
-            throw new IllegalArgumentException("Id must be greater than 0");
-        }
-
-        Task task = taskMap.get(id);
-        if (task != null) {
-            historyManager.add(task);
-            return task;
-        } else {
-            throw new TaskNotFoundException("Task with id " + id + " does not exist");
+    public Task getTaskById(Integer id) {
+        try {
+            if (id <= 0) {
+                throw new IllegalArgumentException("Id must be greater than 0");
+            }
+            Task task = taskMap.get(id);
+            if (task != null) {
+                historyManager.add(task);
+                return task;
+            } else {
+                throw new TaskNotFoundException("Task with id " + id + " does not exist");
+            }
+        } catch (IllegalArgumentException | TaskNotFoundException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
     @Override
-    public Epic getEpicById(Integer id) throws TaskNotFoundException {
-        if (id <= 0) {
-            throw new IllegalArgumentException("Id must be greater than 0");
-        }
-
-        Epic epic = epicMap.get(id);
-        if (epic != null) {
-            historyManager.add(epic);
-            return epic;
-        } else {
-            throw new TaskNotFoundException("Epic with id " + id + " does not exist");
+    public Epic getEpicById(Integer id) {
+        try {
+            if (id <= 0) {
+                throw new IllegalArgumentException("Id must be greater than 0");
+            }
+            Epic epic = epicMap.get(id);
+            if (epic != null) {
+                historyManager.add(epic);
+                return epic;
+            } else {
+                throw new TaskNotFoundException("Epic with id " + id + " does not exist");
+            }
+        } catch (IllegalArgumentException | TaskNotFoundException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -199,6 +209,9 @@ public class InMemoryTaskManager implements TaskManager {
         if (taskId == null || !taskMap.containsKey(taskId)) {
             System.out.println("Task doesn't exist");
             return null;
+        }
+        if (task.getStatus() == null) {
+            task.setStatus(Status.NEW);
         }
 
         prioritizedTasks.removeIf(currentTask -> currentTask.getId().equals(taskId));
@@ -235,28 +248,26 @@ public class InMemoryTaskManager implements TaskManager {
 
         Integer subtaskId = subtask.getId();
         if (subtaskId == null || !subtaskMap.containsKey(subtaskId)) {
-            System.out.println("Subtask doesn't exist");
-            return null;
+            throw new IllegalArgumentException("It is impossible to update: subtask with such ID does not exist");
         }
-
         if (hasTimeOverlapWithPrioritizedTasks(subtask)) {
             throw new ManagerErrorSaveTaskTime("The task was not updated, change the start time");
         }
 
         Epic epic = epicMap.get(subtask.getEpicId());
-        ArrayList<Subtask> subtaskList = epic.getSubtaskList();
+        ArrayList<Subtask> subtaskList = epic.getSubtaskList(); // sub прилетает не понятно откуда
 
         subtaskList.removeIf(currentSubtask -> currentSubtask.getId().equals(subtaskId));
         prioritizedTasks.remove(subtask);
-
+        if (subtask.getStatus() == null) {
+            subtask.setStatus(epic.getStatus());
+        }
         subtaskMap.replace(subtaskId, subtask);
         subtaskList.add(subtask);
         epic.setSubtaskList(subtaskList);
         prioritizedTasks.add(subtask);
-
         updateEpicStatus(epic);
         calculateEpicDuration(epic.getId());
-
         return subtask;
     }
 
@@ -300,6 +311,7 @@ public class InMemoryTaskManager implements TaskManager {
                 epic.setSubtaskList(newSubtaskList);
                 updateEpicStatus(epic);
                 calculateEpicDuration(epic.getId());
+                prioritizedTasks.remove(subtask);
             }
         }
     }
@@ -391,5 +403,9 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public List<Task> getPrioritizedTasks() {
         return new ArrayList<>(prioritizedTasks);
+    }
+
+    public void addTaskPriorityList(Task task) {
+        prioritizedTasks.add(task);
     }
 }

@@ -28,8 +28,6 @@ class FileBackedTaskManagerTest extends TaskManagerTest {
             if (tempFile == null) {
                 throw new IllegalStateException("Временный файл не был создан.");
             }
-            System.out.println("Task manager создан в файле " +
-                    tempFile.getAbsolutePath());
         } catch (IOException e) {
             throw new IllegalStateException("Ошибка создания временного файла", e);
         }
